@@ -47,17 +47,40 @@ class DataArchive(object):
     def startArchive(self):        
         self.sourceManager.makeSourcePreparedStatements()
         self.tempManager.makeTempPreparedStatements()
-        
-        #initilize the temp manager with config
-        
-        
+        #Copy data from active table to temp table        
+        status=self.copyRecordFromSourceToTemporary(self.config.find('condition'))
+        if status:
+            print "Data moved to Temporary Table"
+        else:
+            print "Data Transfer to Temporary Table failed."
+            return False
+        #extract data from temp table to local file
         
         #read the column names from source
         coulmnList=self.sourceManager.getColumnList()
-        print coulmnList
+        
+        
+        #compress file using bz2
+        
+        
+        #move compressed file to Amazon S3
+        
+        
+        #check if file copied to S3
+        
+        
+        #Delete file from file system
+        
+        
+        #truncate temporary table   
+        
+        #return True     
         
         
         
+        
+    def copyRecordFromSourceToTemporary(self,conditionConfig):
+        pass 
         
         
         

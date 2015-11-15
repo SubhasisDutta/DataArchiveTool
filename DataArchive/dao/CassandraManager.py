@@ -46,10 +46,11 @@ class CassandraManager(object):
         return clusterNodes
     
     def makeSourcePreparedStatements(self):
+        self.selectlimit=int(self.config.find('dataSource').find('selectlimit').text)
         
-        pass
     
     def makeTempPreparedStatements(self):
+        self.batchlimit=int(self.config.find('dataSource').find('batchlimit').text)
         insertPoints=self.getInsertPointString()
         self.insertBatch= BatchStatement()
         self.batchCount=0        
@@ -58,6 +59,6 @@ class CassandraManager(object):
     
     def getInsertPointString(self):
         insertPoints=''        
-        for i in range(len(self.dbColumnList)):
+        for i in range(len(self.columnList)):
             insertPoints+="?,"
         return insertPoints[:-1]
