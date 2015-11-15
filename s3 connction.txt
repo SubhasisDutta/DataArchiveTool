@@ -1,0 +1,71 @@
+from boto.s3.connection import S3Connection
+conn = S3Connection('AKIAIYS2IMXPCCIQR5OQ', 'RhpKKhOjG4d/QVGLC00DSlyf3N+0eYLZfctCdNzP')
+#The acess key needs write acess to Amazon S3 
+bucket = conn.create_bucket('mybucketserendiotest')
+
+>>> from boto.s3.key import Key
+>>> k = Key(bucket)
+>>> k.key = 'foobar'
+>>> k.set_contents_from_string('This is a test of S3 Subhasis')
+29
+>>> k.get_contents_as_string()
+'This is a test of S3 Subhasis'
+>>> 
+
+
+>>> k1 = Key(bucket)
+>>> k1.key = 'myfile'
+>>> k1.set_contents_from_filename('C:\Users\Subhasis\Desktop\DietrichundMohamma14.pdf')
+>>> k1.get_contents_to_filename('c:\bar.pdf')
+
+
+
+>>> import math, os
+>>> import boto
+>>> from filechunkio import FileChunkIO
+
+# Connect to S3
+>>> c = boto.connect_s3()
+>>> b = c.get_bucket('mybucket')
+
+
+>>> import boto
+>>> c = boto.connect_s3()
+>>> b = c.get_bucket('mybucket') # substitute your bucket name here
+
+# Will hit the API to check if it exists.
+>>> possible_key = b.get_key('mykey') # substitute your key name here
+
+# Won't hit the API.
+>>> key_we_know_is_there = b.get_key('mykey', validate=False)
+
+
+
+
+# Get file info
+>>> source_path = 'path/to/your/file.ext'
+>>> source_size = os.stat(source_path).st_size
+
+# Create a multipart upload request
+>>> mp = b.initiate_multipart_upload(os.path.basename(source_path))
+
+# Use a chunk size of 50 MiB (feel free to change this)
+>>> chunk_size = 52428800
+>>> chunk_count = int(math.ceil(source_size / float(chunk_size)))
+
+# Send the file parts, using FileChunkIO to create a file-like object
+# that points to a certain byte range within the original file. We
+# set bytes to never exceed the original file size.
+>>> for i in range(chunk_count):
+>>>     offset = chunk_size * i
+>>>     bytes = min(chunk_size, source_size - offset)
+>>>     with FileChunkIO(source_path, 'r', offset=offset,
+                         bytes=bytes) as fp:
+>>>         mp.upload_part_from_file(fp, part_num=i + 1)
+
+# Finish the upload
+>>> mp.complete_upload()
+
+
+>>> mybucket = conn.get_bucket('mybucket') # Substitute in your bucket name
+>>> mybucket.list()

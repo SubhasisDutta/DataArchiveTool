@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<conf>
+	<source> <!-- This is the details of the table from which data needs to be archived -->
+		<type>CASSANDRA</type>
+		<clusters>
+			<cluster>127.0.0.1</cluster>
+		</clusters>
+		<port>9042</port>
+		<dataSource>
+			<keyspace>testkeyspace</keyspace> <!-- Tool  assumes that the keyspace is already present in Cassandra -->
+			<table>tweets_new</table>			
+			<selectlimit>10</selectlimit>
+		</dataSource>				
+	</source>	
+	<temporarydump><!-- This is the details of a temporary table which is used during archiving. This able should have the same schema as the source table. -->
+		<type>CASSANDRA</type>
+		<clusters>
+			<cluster>127.0.0.1</cluster>
+		</clusters>
+		<port>9042</port>
+		<dataSource>
+			<keyspace>testkeyspace</keyspace> <!-- Tool  assumes that the keyspace  & table is already present is already present in Cassandra -->
+			<table>tweetstemp</table>
+			<batchlimit>10</batchlimit>
+		</dataSource>				
+	</temporarydump>
+	<condition>
+		<columnname>
+			posttweetdate
+		</columnname>
+		<operator>LESS</operator><!-- EQUAL, LESS, GREATER, NOT_EQUAL, LESS_EQUAL, GRATER_EQUAL -->
+		<valuetype>DATETIME</valuetype> <!-- DATETIME, INTEGER, STRING, BOOLEAN -->
+		<value>90:DAYS</value> <!-- 100:HOURS(This special syntax is calculated fom current date),50, "ABC", True/False, TIMESTAMP  -->
+	</condition>
+	
+	<archive>
+		<format>CSV</format>
+		<mode>FILE</mode>
+		<compression>BZ2</compression>
+		<location></location>		
+	</archive>
+	
+	<transfer>		
+		<connection destination="AWS_S3">
+			<AccessKey>AKIAIYS2IMXPCCIQR5OQ</AccessKey>
+			<SecretAccessKey>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</SecretAccessKey>
+			<Bucket>mybucketserendiotest</Bucket>
+		</connection>
+	</transfer>
+</conf>
