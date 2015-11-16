@@ -10,6 +10,7 @@
 			<keyspace>testkeyspace</keyspace> <!-- Tool  assumes that the keyspace is already present in Cassandra -->
 			<table>tweets_new</table>			
 			<selectlimit>10</selectlimit>
+			<batchlimit>20</batchlimit>
 		</dataSource>				
 	</source>	
 	<temporarydump><!-- This is the details of a temporary table which is used during archiving. This able should have the same schema as the source table. -->
@@ -20,17 +21,16 @@
 		<port>9042</port>
 		<dataSource>
 			<keyspace>testkeyspace</keyspace> <!-- Tool  assumes that the keyspace  & table is already present is already present in Cassandra -->
-			<table>tweetstemp</table>
+			<table>tweets_new_temp</table>
 			<batchlimit>10</batchlimit>
 		</dataSource>				
 	</temporarydump>
 	<condition>
-		<columnname>
-			posttweetdate
-		</columnname>
-		<operator>LESS</operator><!-- EQUAL, LESS, GREATER, NOT_EQUAL, LESS_EQUAL, GRATER_EQUAL -->
+		<!-- this column must be in the partition key else cassandra wont be able to perform select operation -->
+		<columnname>posteddate</columnname>
+		<operator>LESS</operator><!-- EQUAL, LESS, GREATER, LESS_EQUAL, GRATER_EQUAL -->
 		<valuetype>DATETIME</valuetype> <!-- DATETIME, INTEGER, STRING, BOOLEAN -->
-		<value>90:DAYS</value> <!-- 100:HOURS(This special syntax is calculated fom current date),50, "ABC", True/False, TIMESTAMP  -->
+		<value>90:DAYS</value> <!-- 100:HOURS/DAYS(This special syntax which is calculated from current date minus x days),50, "ABC", True/False  -->
 	</condition>
 	
 	<archive>

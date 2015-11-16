@@ -3,7 +3,7 @@ Created on Nov 13, 2015
 
 @author: Subhasis
 '''
-
+import datetime
 import xml.etree.ElementTree as ET
 from dao.CassandraManager import CassandraManager
 
@@ -74,13 +74,43 @@ class DataArchive(object):
         
         #truncate temporary table   
         
-        #return True     
-        
-        
+        #return True
         
         
     def copyRecordFromSourceToTemporary(self,conditionConfig):
-        pass 
+        condition=self.prepareCondition(conditionConfig)
+        return self.sourceManager.copyData(self.tempManager,condition)
         
+    def prepareCondition(self,conditionConfig): 
+        column=conditionConfig.find('columnname').text   
+        operator=conditionConfig.find('operator').text 
+        valueType=conditionConfig.find('valuetype').text
+        value=conditionConfig.find('value').text 
+        condition=column+' '+self.sourceManager.operatorSymbol(operator)+' '+self.getConditionValue(valueType,value)
+        return condition
+    
+    def getConditionValue(self,valueType,value):
+        if valueType == 'DATETIME':            
+            return self.processDateValue(value)
+        elif valueType == 'INTEGER':
+            return value
+        elif valueType == 'BOOLEAN':
+            return '\''+value+'\''
+        else: # String and other type
+            return '\''+value+'\''
         
-        
+    def processDateValue(self,value):        
+        value=datetime.datetime.now()-self.getTimeDelta(value)
+        return '\''+value.strftime("%Y-%m-%d %H:%M:%S")+'\''
+    
+    def getTimeDelta(self,value):
+        timeDelta=value.split(':')[0]
+        timedeltaUnit=value.split(':')[1]
+        #microseconds, milliseconds, seconds, minutes, hours, days, weeks        
+        if timedeltaUnit == 'HOURS':
+            return datetime.timedelta(hours=int(timeDelta))
+        if timedeltaUnit == 'DAYS':
+            return datetime.timedelta(days=int(timeDelta))
+        if timedeltaUnit == 'WEEKS':
+            return datetime.timedelta(weeks=int(timeDelta)) 
+        return datetime.timedelta(seconds=int(timeDelta))
