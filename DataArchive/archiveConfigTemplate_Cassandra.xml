@@ -9,10 +9,10 @@
 		<dataSource>
 			<keyspace>testkeyspace</keyspace> <!-- Tool  assumes that the keyspace is already present in Cassandra -->
 			<table>tweets_new</table>			
-			<selectlimit>10</selectlimit>
-			<batchlimit>20</batchlimit>
-		</dataSource>				
-	</source>	
+		</dataSource>		
+		<selectlimit>100</selectlimit>
+	</source>
+	
 	<temporarydump><!-- This is the details of a temporary table which is used during archiving. This able should have the same schema as the source table. -->
 		<type>CASSANDRA</type>
 		<clusters>
@@ -21,9 +21,15 @@
 		<port>9042</port>
 		<dataSource>
 			<keyspace>testkeyspace</keyspace> <!-- Tool  assumes that the keyspace  & table is already present is already present in Cassandra -->
-			<table>tweets_new_temp</table>
-			<batchlimit>10</batchlimit>
-		</dataSource>				
+			<table>tweets_new_temp</table>			
+		</dataSource>
+		<selectlimit>100</selectlimit>
+		<!-- This is the location and file where the temporary file is stored by cassandra. This needs to be provided by the user.-->
+		<!-- Please disable Snapshot for this table or store them in a seperate location.-->
+		<location>D:\var\lib\cassandra\data\testkeyspace\tweets_new_temp-889992d08b6211e5b16f675139171e93\</location>
+		<!-- This is the location where the compressed file is created to be moved to S3.-->
+		<!-- the file will be stored in this format testkeyspace.tweets_new_temp-2015-11-21-19-48-03_archive.bz2 -->
+		<compressLocation>D:\Workspace\tools\</compressLocation>
 	</temporarydump>
 	<condition>
 		<!-- this column must be in the partition key else cassandra wont be able to perform select operation -->

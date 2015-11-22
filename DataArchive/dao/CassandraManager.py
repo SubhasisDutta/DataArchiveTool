@@ -24,8 +24,8 @@ class CassandraManager(object):
         
         self.columnList=self.getColumnList()
         self.columnstr = ','.join(self.columnList)
-        
-        
+        self.batchCount=0
+        self.batchlimit=int(self.config.find('selectlimit').text)
             
         
     
@@ -46,18 +46,14 @@ class CassandraManager(object):
             clusterNodes.append(clusterNode.text)        
         return clusterNodes
     
-    def makeSourcePreparedStatements(self):
-        self.selectlimit=int(self.config.find('dataSource').find('selectlimit').text)
-        self.delRecord=self.session.prepare('DELETE FROM '+self.table+' WHERE id = ?')
-        self.delBatch= BatchStatement()
-        self.delbatchCount=0
+    def makeSourcePreparedStatements(self):        
+        self.delRecord_Statement=self.session.prepare('DELETE FROM '+self.table+' WHERE id = ?')
+        self.delBatch= BatchStatement()        
     
-    def makeTempPreparedStatements(self):
-        self.batchlimit=int(self.config.find('dataSource').find('batchlimit').text)
+    def makeTempPreparedStatements(self):        
         insertPoints=self.getInsertPointString()
-        self.insertBatch= BatchStatement()
-        self.batchCount=0
-        self.insertQuery=self.session.prepare('INSERT INTO '+self.table+' ('+self.columnstr+') VALUES ('+insertPoints+')')
+        self.insertBatch= BatchStatement()        
+        self.insertQuery_Statement=self.session.prepare('INSERT INTO '+self.table+' ('+self.columnstr+') VALUES ('+insertPoints+')')
     
     def getInsertPointString(self):
         insertPoints=''        
@@ -79,11 +75,11 @@ class CassandraManager(object):
         else:
             return '='
         
-    def copyData(self,destinationManager,condition):
-        query='SELECT '+self.columnstr+' from '+self.table+' WHERE '+condition+' LIMIT '+str(self.selectlimit)+' ALLOW FILTERING'        
+    def moveData(self,destinationManager,condition):
+        query='SELECT '+self.columnstr+' from '+self.table+' WHERE '+condition+' LIMIT '+str(self.batchlimit)+' ALLOW FILTERING'        
         while True:
             rows = self.session.execute(query)
-            if len(rows) == 0:
+            if len(rows) == 0 or rows == None:
                 break
             else:
                 for row in rows:
@@ -93,19 +89,26 @@ class CassandraManager(object):
                     s=destinationManager.push(data,destinationManager.insertBatch)
                     if s:
                         #delete row from source
-                        print row.id
-                        pass
+                        self.pop(row.id,self.delBatch)
+                        #print row.id
+                    else:
+                        print "There was some Problem in moving data from Main table to Temporary table."
                         
                         
-        
-        return False
+                        
+                        
+        destinationManager.flushBatch(destinationManager.insertBatch)            
+        self.flushBatch(self.delBatch)
+        return True
      
-    def pop(self,id,writeType='ab'):        
-        return self.batchQuery(self.delRecord, id)
+    def pop(self,record_id,batch,writeType='ab'): 
+        dataList=[]
+        dataList.append(record_id)      
+        return self.batchQuery(self.delRecord_Statement, dataList,batch)
     
            
     def push(self,dataList,batch,writeType='ab'):        
-        return self.batchQuery(self.insertQuery, dataList,batch)
+        return self.batchQuery(self.insertQuery_Statement, dataList,batch)
     
     def batchQuery(self,statement,data,batch):
         if self.batchCount < self.batchlimit:
@@ -121,3 +124,9 @@ class CassandraManager(object):
     def flushBatch(self,batch):
         self.session.execute(batch)
         return True 
+    
+    def truncateTable(self):
+        query='TRUNCATE '+self.table
+        self.session.execute(query)
+        return True
+        
